@@ -116,10 +116,8 @@ async def handle_photo(message: types.Message):
         file_info = await bot.get_file(photo.file_id)
         file_url = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
         caption = "Что изображено на фото?"
-        try:
+        if message.caption:
             caption = message.caption
-        except:
-            caption = "Что изображено на фото?"
 
         try:
             # 🎯 Отправляем фото в GPT-4o (gpt-4-turbo)
