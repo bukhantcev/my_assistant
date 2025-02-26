@@ -14,6 +14,14 @@ from aiogram.utils.markdown import hbold
 from aiogram.client.default import DefaultBotProperties
 
 
+import ssl
+import aiohttp
+
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
+
 # Настройки
 TOKEN = os.getenv("TOKEN")
 OPENAI_API_KEY = os.getenv("AITOKEN")
@@ -140,6 +148,72 @@ async def handle_photo(message: types.Message):
         except Exception as e:
             logging.error(f"Ошибка обработки фото: {e}")
             await message.answer("Ошибка обработки изображения. Попробуйте позже.")
+
+
+# 🔹 Хендлер для обработки голосовых сообщений и аудиофайлов
+@dp.message(F.voice | F.audio | F.document)
+async def handle_audio(message: types.Message):
+    if message.from_user.id not in [404354012, 422964820]:
+        return
+
+    # Определяем тип файла
+    if message.voice:
+        file_id = message.voice.file_id
+        file_format = "ogg"
+    elif message.audio:
+        file_id = message.audio.file_id
+        file_format = message.audio.file_name.split(".")[-1]
+    elif message.document:
+        file_id = message.document.file_id
+        file_format = message.document.file_name.split(".")[-1]
+    else:
+        await message.reply("Неподдерживаемый формат аудио.")
+        return
+
+    file_info = await bot.get_file(file_id)
+    file_path = f"https://api.telegram.org/file/bot{bot.token}/{file_info.file_path}"
+    local_filename = f"audio.{file_format}"
+
+    # Скачивание файла
+    try:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
+            async with session.get(file_path) as resp:
+                if resp.status == 200:
+                    async with aiofiles.open(local_filename, "wb") as f:
+                        await f.write(await resp.read())
+                else:
+                    await message.reply("Ошибка загрузки аудиофайла.")
+                    return
+    except Exception as e:
+        logging.error(f"Ошибка скачивания файла: {e}")
+        await message.reply("Ошибка скачивания аудиофайла.")
+        return
+
+    # Отправка в OpenAI Whisper
+    try:
+        with open(local_filename, "rb") as audio_file:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language="ru"  # Распознавание русского языка
+            )
+        if message.from_user.id == 404354012 or message.from_user.id == 422964820:
+
+            if message.from_user.id == 404354012:
+                assistant_id = 'asst_kCFa7ZkhnCCtRY8roDO3vpfh'
+            elif message.from_user.id == 422964820:
+                assistant_id = 'asst_85Boy7BUjKTcIRzb1Ejvl6ch'
+            if 'запомни' in transcription.text.lower():
+                old_instructions = client.beta.assistants.retrieve(assistant_id).instructions
+                edit_instructions(assistant_id, message.text[len('запомни'):], old_instructions)
+                await message.reply('Запомнил')
+                return None
+            create_message(thread_id, transcription.text)
+            create_run(thread_id, assistant_id)
+            await message.reply(message_list(thread_id))
+    except Exception as e:
+        logging.error(f"Ошибка обработки аудио: {e}")
+        await message.reply("Ошибка обработки аудиофайла.")
 
 
 # Запуск бота
