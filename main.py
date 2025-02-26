@@ -80,11 +80,11 @@ async def start_handler(message: types.Message):
 @dp.message()
 async def chat_handler(message: types.Message):
     print(message.from_user.id)
-    if message.from_user.id == 404354012 or message.from_user.id == 7394393302:
+    if message.from_user.id == 404354012 or message.from_user.id == 422964820:
 
         if message.from_user.id == 404354012:
             assistant_id = 'asst_kCFa7ZkhnCCtRY8roDO3vpfh'
-        elif message.from_user.id == 7394393302:
+        elif message.from_user.id == 422964820:
             assistant_id = 'asst_85Boy7BUjKTcIRzb1Ejvl6ch'
         if 'запомни' in message.text.lower():
             old_instructions = client.beta.assistants.retrieve(assistant_id).instructions
