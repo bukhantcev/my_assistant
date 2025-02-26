@@ -111,6 +111,25 @@ async def chat_handler(message: types.Message):
             edit_instructions(assistant_id, message.text[len('запомни'):], old_instructions)
             await message.reply('Запомнил')
             return None
+        if 'нарисуй' in message.text.lower():
+            text = message.text[7:].strip()
+            if not text:
+                await message.reply("Пожалуйста, напишите, что нарисовать после слова 'нарисуй'.")
+                return
+            try:
+                response = client.images.generate(
+                    model="dall-e-3",
+                    prompt=text,
+                    n=1,
+                    size="1024x1024"
+                )
+                image_url = response.data[0].url
+                await message.answer_photo(photo=image_url, caption=f"Ваше изображение по запросу: {text}")
+            except Exception as e:
+                logging.error(f"Ошибка генерации изображения: {e}")
+                await message.reply("Ошибка генерации изображения. Попробуйте позже.")
+            return None
+
         create_message(thread_id, message.text)
         create_run(thread_id, assistant_id)
         await message.reply(message_list(thread_id))
@@ -208,6 +227,25 @@ async def handle_audio(message: types.Message):
                 edit_instructions(assistant_id, message.text[len('запомни'):], old_instructions)
                 await message.reply('Запомнил')
                 return None
+            if 'нарисуй' in transcription.text.lower():
+                text = transcription.text[7:].strip()
+                if not text:
+                    await message.reply("Пожалуйста, напишите, что нарисовать после слова 'нарисуй'.")
+                    return
+                try:
+                    response = client.images.generate(
+                        model="dall-e-3",
+                        prompt=text,
+                        n=1,
+                        size="1024x1024"
+                    )
+                    image_url = response.data[0].url
+                    await message.answer_photo(photo=image_url, caption=f"Ваше изображение по запросу: {text}")
+                except Exception as e:
+                    logging.error(f"Ошибка генерации изображения: {e}")
+                    await message.reply("Ошибка генерации изображения. Попробуйте позже.")
+                return None
+
             create_message(thread_id, transcription.text)
             create_run(thread_id, assistant_id)
             await message.reply(message_list(thread_id))
