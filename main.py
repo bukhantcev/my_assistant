@@ -27,7 +27,7 @@ dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
 thread_id = ''
-assistant_id = 'asst_kCFa7ZkhnCCtRY8roDO3vpfh'
+
 try:
    thread_id_file =  open('thread.txt', 'r')
    thread_id = thread_id_file.read()
@@ -79,14 +79,21 @@ async def start_handler(message: types.Message):
 # GPT-4o: Обработка текстовых сообщений
 @dp.message()
 async def chat_handler(message: types.Message):
-    if 'запомни' in message.text.lower():
-        old_instructions = client.beta.assistants.retrieve(assistant_id).instructions
-        edit_instructions(assistant_id, message.text[len('запомни'):],old_instructions)
-        await message.reply('Запомнил')
-        return None
-    create_message(thread_id, message.text)
-    create_run(thread_id, assistant_id)
-    await message.reply(message_list(thread_id))
+    print(message.from_user.id)
+    if message.from_user.id == 404354012 or message.from_user.id == 7394393302:
+
+        if message.from_user.id == 404354012:
+            assistant_id = 'asst_kCFa7ZkhnCCtRY8roDO3vpfh'
+        elif message.from_user.id == 7394393302:
+            assistant_id = 'asst_85Boy7BUjKTcIRzb1Ejvl6ch'
+        if 'запомни' in message.text.lower():
+            old_instructions = client.beta.assistants.retrieve(assistant_id).instructions
+            edit_instructions(assistant_id, message.text[len('запомни'):],old_instructions)
+            await message.reply('Запомнил')
+            return None
+        create_message(thread_id, message.text)
+        create_run(thread_id, assistant_id)
+        await message.reply(message_list(thread_id))
 
 
 # Запуск бота
