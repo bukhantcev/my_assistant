@@ -37,7 +37,6 @@ dp = Dispatcher()
 # Логирование
 logging.basicConfig(level=logging.INFO)
 
-thread_id = ''
 
 try:
    thread_id_file = open('thread.txt', 'r')
