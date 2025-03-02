@@ -38,12 +38,7 @@ dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
 
-try:
-   thread_id_file = open('thread.txt', 'r')
-   thread_id = thread_id_file.read()
-   thread_id_file.close()
-except:
-    pass
+thread_id = None
 
 
 def create_message(thread_id, message):
@@ -255,21 +250,13 @@ async def handle_audio(message: types.Message):
 
 # Запуск бота
 async def main():
+    global thread_id  # Указываем, что будем менять глобальную переменную
     logging.info("Бот запущен")
 
-    # Проверяем, существует ли файл
-    file_path = os.path.join(os.getcwd(), 'thread.txt')
-
-    if not os.path.exists(file_path):
-        # Создаём новый поток, если файла нет
-        thread = client.beta.threads.create()
-        with open(file_path, 'w') as file:
-            file.write(thread.id)
+    if thread_id is None:  # Если ID еще не задан
+        thread_id = client.beta.threads.create().id
+        logging.info(f"Создан новый thread_id: {thread_id}")
     else:
-        # Читаем существующий thread_id
-        with open(file_path, 'r') as file:
-            thread_id = file.read().strip()
-
         logging.info(f"Используется существующий thread_id: {thread_id}")
 
     await dp.start_polling(bot)
