@@ -257,11 +257,23 @@ async def handle_audio(message: types.Message):
 # Запуск бота
 async def main():
     logging.info("Бот запущен")
-    thread = client.beta.threads.create()
-    with open('thread.txt', 'w') as file:
-        file.write(thread.id)
-    await dp.start_polling(bot)
 
+    # Проверяем, существует ли файл
+    file_path = 'thread.txt'
+
+    if not os.path.exists(file_path):
+        # Создаём новый поток, если файла нет
+        thread = client.beta.threads.create()
+        with open(file_path, 'w') as file:
+            file.write(thread.id)
+    else:
+        # Читаем существующий thread_id
+        with open(file_path, 'r') as file:
+            thread_id = file.read().strip()
+
+        logging.info(f"Используется существующий thread_id: {thread_id}")
+
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
