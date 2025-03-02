@@ -258,7 +258,7 @@ async def main():
     logging.info("Бот запущен")
 
     # Проверяем, существует ли файл
-    file_path = 'thread.txt'
+    file_path = os.path.join(os.getcwd(), 'thread.txt')
 
     if not os.path.exists(file_path):
         # Создаём новый поток, если файла нет
