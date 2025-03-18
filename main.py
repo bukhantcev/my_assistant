@@ -13,14 +13,12 @@ from aiogram.types import FSInputFile
 from aiogram.utils.markdown import hbold
 from aiogram.client.default import DefaultBotProperties
 
-
 import ssl
 import aiohttp
 
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
-
 
 # Настройки
 TOKEN = os.getenv("TOKEN")
@@ -36,7 +34,6 @@ dp = Dispatcher()
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
-
 
 thread_id = None
 
@@ -104,6 +101,26 @@ async def chat_handler(message: types.Message):
             old_instructions = client.beta.assistants.retrieve(assistant_id).instructions
             edit_instructions(assistant_id, message.text[len('запомни'):], old_instructions)
             await message.reply('Запомнил')
+            return None
+        if 'найди' in message.text.lower():
+            completion = client.chat.completions.create(
+                model="gpt-4o-search-preview",
+                web_search_options={"search_context_size": "high",
+                                    "user_location": {
+                                        "type": "approximate",
+                                        "approximate": {
+                                            "country": "RU",
+                                            "city": "Moscow",
+                                            "region": "Moscow",
+                                        }
+                                    }
+                                        },
+                messages=[
+                    {"role": "user", "content": message.text}
+                ]
+            )
+
+            await message.reply(completion.choices[0].message.content)
             return None
         if 'нарисуй' in message.text.lower():
             text = message.text[7:].strip()
@@ -221,6 +238,25 @@ async def handle_audio(message: types.Message):
                 edit_instructions(assistant_id, message.text[len('запомни'):], old_instructions)
                 await message.reply('Запомнил')
                 return None
+            if 'найди' in transcription.text.lower():
+                completion = client.chat.completions.create(
+                    model="gpt-4o-search-preview",
+                    web_search_options={"search_context_size": "high",
+                                        "user_location": {
+                                            "type": "approximate",
+                                            "approximate": {
+                                                "country": "RU",
+                                                "city": "Moscow",
+                                                "region": "Moscow",
+                                            }
+                                        }
+                                        },
+                    messages=[
+                        {"role": "user", "content": transcription.text}
+                    ]
+                )
+                await message.reply(completion.choices[0].message.content)
+                return None
             if 'нарисуй' in transcription.text.lower():
                 text = transcription.text[7:].strip()
                 if not text:
@@ -260,6 +296,7 @@ async def main():
         logging.info(f"Используется существующий thread_id: {thread_id}")
 
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
